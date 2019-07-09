@@ -154,15 +154,61 @@ Quando o endereço IP externo estiver disponível, aponte um navegador da web pa
 
  Por exemplo, http://a7a95c2b9e69711e7b1a3022fdcfdf2e-1985673473.us-west-2.elb.amazonaws.com:3000
 
-#### Desinstalando
+### Desinstalando
 
 Para desinstalar, basta remover todos os serviços criados anteriormente. Para isto, execute o seguinte comando:
 
 ```Console
 kubectl delete rc/redis-master rc/redis-slave rc/guestbook svc/redis-master svc/redis-slave svc/guestbook
-
 ```
 
+## Instalando a Interface de Usuário Kubernetes (Dashboard)
 
+A Interface de Usuário permite que você visualize várias informações sobre o cluster. Informações como a quantidade de pods, serviços e etc são fácilmente visualizaveis usando essa ferramenta. 
 
+Para instalar no cluster, execute o seguinte comando:
 
+```Console
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml && kubectl apply -f https://raw.githubusercontent.com/kubernetes/heapster/master/deploy/kube-config/influxdb/heapster.yaml && kubectl apply -f https://raw.githubusercontent.com/kubernetes/heapster/master/deploy/kube-config/influxdb/influxdb.yaml && kubectl apply -f https://raw.githubusercontent.com/kubernetes/heapster/master/deploy/kube-config/rbac/heapster-rbac.yaml
+```
+
+Feito isso, crie um arquivo chamado `eks-admin-service-account.yaml` com as definições do serivço da conta, assim um role-binding cluster chamado eks-admin. Para criar o arquivo automáticamente, execute o seguinte código:
+
+```Console
+echo $'apiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: eks-admin\n  namespace: kube-system\n---\napiVersion: rbac.authorization.k8s.io/v1beta1\nkind: ClusterRoleBinding\nmetadata:\n  name: eks-admin\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: ClusterRole\n  name: cluster-admin\nsubjects:\n- kind: ServiceAccount\n  name: eks-admin\n  namespace: kube-system' > eks-admin-service-account.yaml
+```
+
+Após a criação do serviço e a cluster role binding. Está na hora de aplicá-lo ao seu cluster:
+
+```Console
+kubectl apply -f eks-admin-service-account.yaml
+```
+
+#### Fazendo Proxy e Efetuando Login:
+
+Nesta seção iremos mostrar como fazer o proxy do painel de control instalado no cluster, e como efetuar login utilizando um token.
+
+##### Obtendo o Token
+Para efetuar login no seu painel de controle, você necessitará de um token. Para obter este token você precisa executar o seguinte comando:
+
+```Console
+kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep eks-admin | awk '{print $1}')
+```
+
+Copie o token que será impresso no terminal (Não copie tudo, apenas o token).
+
+##### Fazendo o Proxy
+
+Para iniciar o proxy, execute o seguinte comando:
+
+```Console
+kubectl proxy
+```
+
+Feito isso, seu computador deve estar conectado com o cluster, basta agora apenas acessar o painel de controle no browser. [Clique Aqui](http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#!/login) para abrir o painel de controle.
+
+Obs.: Você necessita do `token` obtido no passo anterior para logar.
+
+Esta seção foi inspirada pelo [guia oficial](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/dashboard-tutorial.html)
+
+## Usando HELM em conjunto com AWS
