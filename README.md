@@ -110,3 +110,59 @@ Aonde `nome-do-cluster` é o nome do seu cluster.
 Para mais informações, veja a [documentação oficial](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/delete-cluster.html)
 
 
+## Meu primeiro Pod
+
+Em caráter educacional, vamos instalar uma aplicação de livro de convidados no cluster e logo após vamos deinstalá-lo. Estes comandos foram retirados [deste guia](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/eks-guestbook.html).
+
+### Instalando
+#### One-liner (Comando de uma linha)
+Caso queira instalar com apenas uma linha de código, copie e cole isto no terminal:
+
+```Console
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/examples/master/guestbook-go/redis-master-controller.json && kubectl apply -f https://raw.githubusercontent.com/kubernetes/examples/master/guestbook-go/redis-master-service.json && kubectl apply -f https://raw.githubusercontent.com/kubernetes/examples/master/guestbook-go/redis-slave-controller.json && kubectl rolling-update redis-slave --image=k8s.gcr.io/redis-slave:v2 --image-pull-policy=Always && kubectl apply -f https://raw.githubusercontent.com/kubernetes/examples/master/guestbook-go/redis-slave-service.json && kubectl apply -f https://raw.githubusercontent.com/kubernetes/examples/master/guestbook-go/guestbook-controller.json && kubectl apply -f https://raw.githubusercontent.com/kubernetes/examples/master/guestbook-go/guestbook-service.json && kubectl get services -o wide --watch
+```
+#### Linha por linha:
+
+<details><summary>Clique aqui para abrir o passo-a-passo</summary><p>
+
+1. Criar o Master Replication Controller do Redis
+   1. `kubectl apply -f https://raw.githubusercontent.com/kubernetes/examples/master/guestbook-go/redis-master-controller.json`
+2. Criar o Master Service do Redis
+   1. `kubectl apply -f https://raw.githubusercontent.com/kubernetes/examples/master/guestbook-go/redis-master-service.json`
+3. Create o Slave Replication Controler do Redis
+   1. `kubectl apply -f https://raw.githubusercontent.com/kubernetes/examples/master/guestbook-go/redis-slave-controller.json`
+4. Atualizar a imagem do container para o Replication controler do Redis ([detalhes](https://github.com/kubernetes/examples/issues/321))
+   1. `kubectl rolling-update redis-slave --image=k8s.gcr.io/redis-slave:v2 --image-pull-policy=Always`
+5. Criar o Slave Service do Redis
+   1. `kubectl apply -f https://raw.githubusercontent.com/kubernetes/examples/master/guestbook-go/redis-slave-service.json`
+6. Criar o Controlador de Réplicas da aplicação Guestbook
+   1. `kubectl apply -f https://raw.githubusercontent.com/kubernetes/examples/master/guestbook-go/guestbook-controller.json`
+7. Criar o Serviço Guestbook
+   1. `kubectl apply -f https://raw.githubusercontent.com/kubernetes/examples/master/guestbook-go/guestbook-service.json`
+8. Consultar os serviços no seu cluster e aguardar até que o IP externo (External IP) seja populado.
+   1. `kubectl get services -o wide --watch`
+</p>
+</details>
+
+#### Verificando
+Após a instalação completa do serviço e suas dependências, você pode acessar a aplicação pelo endereço externo do cluster (External IP). Para acessar o mesmo, execute o seguinte comando.
+
+```Console
+kubectl get services -o wide
+```
+Quando o endereço IP externo estiver disponível, aponte um navegador da web para esse endereço na porta 3000 para visualizar seu livro de convidados.
+
+ Por exemplo, http://a7a95c2b9e69711e7b1a3022fdcfdf2e-1985673473.us-west-2.elb.amazonaws.com:3000
+
+#### Desinstalando
+
+Para desinstalar, basta remover todos os serviços criados anteriormente. Para isto, execute o seguinte comando:
+
+```Console
+kubectl delete rc/redis-master rc/redis-slave rc/guestbook svc/redis-master svc/redis-slave svc/guestbook
+
+```
+
+
+
+
