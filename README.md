@@ -13,9 +13,9 @@ instanceSupportedIPv4Address = Número de endereços IPv4 (ou IPv6) por interfac
 numeroMaximoPods = ( instanceSupportedIPs * instanceSupportedIPv4Address ) - 1;
 ```
 
-Por exemplo, se você possui a instância t3.nano, que suporta o máximo de 2 interface de redes e possui 4 endereços IPv4 por interface, a sua disponibilidade de Pods será de 7. Isto devido ao fato de um endereço de IP ser reservado para o nó.
+Por exemplo, se você possui a instância t3.nano, que suporta o máximo de 2 interface de redes e possui 2 endereços IPv4 por interface, a sua disponibilidade de Pods será de 3. Isto devido ao fato de um endereço de IP ser reservado para o nó.
 
-```2 * 4 -1 = 7 ```
+```2 * 2 -1 = 3 ```
 
 A informação sobre a quantidade de Interfaces de Rede e a quantidade de endereços IPv4(6) por interface pode ser encontrada neste [endereço](https://docs.aws.amazon.com/pt_br/AWSEC2/latest/UserGuide/using-eni.html)
 
