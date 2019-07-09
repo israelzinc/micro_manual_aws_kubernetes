@@ -259,7 +259,7 @@ Porém, esta opção é insegura visto que isso instala um servidor no seu clust
 
 Uma das maiores preocupações em relação ao Tiller é que ele não é uma opção muito segura visto que ele reside dentro do cluster com todos os direitos adminstrativos. Visto que isto traz um grande risco para o cluster, existe muita discussão sobre a criação de alternativas para termos Helm, sem ter Tiller instalado no servidor. O termo em inglês para isto é *Tillerless* Helm (do inglês Helm sem Tiller).
 
-### Tillerless Helm (Helm sem Tiller)
+## Tillerless Helm (Helm sem Tiller)
 Para usar o Helm sem Tiller, você pode instalar o plugin criado por [Rimas Mocevicius](https://rimusz.net/) 
 
 Para instalar simplesmente execute:
@@ -355,4 +355,102 @@ Troque o `$DOWNLOAD_VERSION` pela versão do diretório ao qual você baixou o s
 
 ```Console
 kubectl delete -f metrics-server-$DOWNLOAD_VERSION/deploy/1.8+/
+```
+### Métricas de Plano de Controle com Prometheus
+
+:warning:Importante!
+
+Antes de iniciar a instalação, você precisa iniciar o Helm com o Tillerless plugin:
+
+```Console
+kubectl create namespace prometheus
+
+helm tiller run my-tiller-namespace -- helm install stable/prometheus \
+--name prometheus \
+--namespace prometheus \
+--set alertmanager.persistentVolume.storageClass="gp2",server.persistentVolume.storageClass="gp2"
+```
+Verifique se todos os pods no namespace prometheus estão prontos (READY state):
+
+```Console
+kubectl get pods -n prometheus
+```
+
+Use então kubectl para fazer o encaminhamento de porta do Console Prometheus para a sua máquina local:
+
+```Console
+kubectl --namespace=prometheus port-forward deploy/prometheus-server 9090
+```
+
+Se seus passos não geraram nenhum erro, você pode abrir o Console Prometheus no seu navegador padrão: [localhost:9090](http://localhost:9090)
+
+#### Removendo Prometheus
+
+Para remover o Prometheus, você só precisa executar o comando usando seu namespace do tiller:
+
+```Console
+helm tiller run my-tiller-namespace -- helm delete prometheus && kubectl delete namespace prometheus
+```
+## Instalar Containers do Docker
+
+Até agora focamos em configuração do Kubernetes, sem mencionar como fazer para transformar nossos containers docker em Pods. De agora em diante atacaremos este problema:
+
+### Criando um repositório em AWS-ECR
+
+Para fazer deploy dos containers docker em um cluster EKS, você primeiro precisa criar um repositório no Amazon Elastic Container Registry (ECR). Você pode conferir o guia oficial neste [site](https://docs.aws.amazon.com/pt_br/AmazonECS/latest/developerguide/docker-basics.html#use-ecr).
+
+Para criar o repositório com o nome `hello-repository` na região `ap-northeast-1`, execute o seguinte comando:
+
+```Console
+aws ecr create-repository --repository-name hello-repository --region ap-northeast1
+```
+
+|flag| Descrição |
+|--- | ---|
+|repository-name (string) | O nome do repositório. Você pode dar um nome próprio (por exemplo my-web-app) ou você pode adicionar um prefixo do namespace para agrupá-lo em categorias (por exemplo projeto-a/my-web-app)|
+|region (string) | A região que este app será criado. Ex.: Tokyo é `ap-northeast-1`. [Lista de Regiões aqui](https://docs.aws.amazon.com/pt_br/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html)|
+
+Saída (Note a Uri do repositório (repositoryUri) na saída. Este será utilizado para fazermos push de Containers Docker):
+
+```Console
+{
+    "repository": {
+        "registryId": "aws_account_id",
+        "repositoryName": "hello-repository",
+        "repositoryArn": "arn:aws:ecr:region:aws_account_id:repository/hello-repository",
+        "createdAt": 1505337806.0,
+        "repositoryUri": "aws_account_id.dkr.ecr.region.amazonaws.com/hello-repository"
+    }
+}
+```
+
+Você precisa colocar a Tag na docker-image com o valor do repositoryUri:
+
+Exemplo:
+
+docker-image = *__hello-world__*
+
+repositoryUri = *__aws_account_id.dkr.ecr.region.amazonaws.com/hello-repository__*
+
+```Console
+docker tag hello-world aws_account_id.dkr.ecr.region.amazonaws.com/hello-repository
+```
+
+Execute o comando `aws ecr get-login --no-include-email` para obter o comando de login de autenticação para o seu registro.
+
+Troque o campo *__region__* para a região do repositório docker.
+
+```Console
+aws ecr get-login --no-include-email --region region
+```
+
+Rode o comando de login docker que foi retornado no passo anterior. Este comando provê um token de autorização com validade de 12 horas.
+
+Envie (Push) a imagem para o Amazon ECR com o valor do repositoryUri do passo anterior.
+
+Exemplo:
+Troque *__aws_account_id.dkr.ecr.region.amazonaws.com/hello-repository__* pelo seu repositório docker.
+
+```Console
+docker push aws_account_id.dkr.ecr.region.amazonaws.com/hello-repository
 ```
