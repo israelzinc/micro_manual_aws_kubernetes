@@ -212,3 +212,36 @@ Obs.: Você necessita do `token` obtido no passo anterior para logar.
 Esta seção foi inspirada pelo [guia oficial](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/dashboard-tutorial.html)
 
 ## Usando HELM em conjunto com AWS
+
+Quando se trata de Kubernetes, uma ferramenta que é muito útil é o [Helm](https://github.com/helm/helm). Helm introduz o conceito de charts, que são uma composição de recursos Kubernetes. Helm usa templates Go, o que permitem uma grande flexibilidade nos seus deploys, visto que é possível customizar valores do chart antes da instalaçãod o mesmo. 
+
+### Instalação
+
+Helm possui dois componentes principais: o cliente de terminal e um servidor chamado Tiller.
+
+A instalação do cliente é bem simples.
+
+#### Linux
+O pacote Snap de Helm é mantido por [Snapcrafters](https://github.com/snapcrafters/helm)
+```Console
+sudo snap install helm --classic
+```
+
+#### MacOS
+Para MacOS, pode-se instalar via Homebrew.
+```Console
+brew install kubernetes-helm
+```
+
+#### Windows
+Os membros da comunidade Kubernetes contribuiram com uma build de um [pacote](https://chocolatey.org/packages/kubernetes-helm) para o [Chocolatey](https://chocolatey.org/packages/kubernetes-helm). Normalmente este pacote está atualizado.
+
+```Console
+choco install kubernetes-helm
+```
+
+O pacote binário também pode ser instalado via `scoop`.
+
+```Console
+scoop install helm
+```
