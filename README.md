@@ -61,8 +61,52 @@ eksctl create cluster \
 
 Para mais informações, visite o site com a [documentação eksctl](https://eksctl.io/) (em inglês).
 
-Caso o seguinte erro apareça, siga as instruções neste guia para instalá-lo [this](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html):
+Caso o seguinte erro apareça, siga as instruções neste guia para instalá-lo [aqui](https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html):
 
 ```Console
 neither aws-iam-authenticator nor heptio-authenticator-aws are installed
 ```
+
+Testando:
+
+`kubectl get svc`
+
+Exemplo de saída:
+
+```Console
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+kubernetes   ClusterIP   10.100.0.1      <none>        443/TCP    21h
+```
+
+## Deletando o cluster EKS via eskctl
+
+Para deletar o cluster, é necessário que sua versão eksctl seja superior a pelo menos a versão 0.1.31. Para verificar suav versão, execute o comando:
+
+```Console
+eksctl version
+```
+Caso, sua versão não seja compatível, você precisará atualizar seu eksctl. Para atualizar eksctl, consulte o [guia oficial da amazon](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/eksctl.html#installing-eksctl)
+
+1. Liste todos os serviços em execução no cluster
+
+```Console
+kubectl get svc --all-namespaces
+```
+
+2. Exclua todos os serviços que têm um valor EXTERNAL-IP associado. Esses serviços são liderados por um load balancer do Elastic Load Balancing, e você deve excluí-los no Kubernetes para permitir que o load balancer e os recursos associados sejam liberados corretamente.
+
+```Console
+kubectl delete svc nome-do-serviço
+```
+Aonde `nome-do-serviço` é o nome do seu serviço.
+
+3. Exclua o cluster e seus nós de operador associados com o seguinte comando, substituindo o texto vermelho pelo nome do seu cluster.
+
+```Console
+eksctl delete cluster --name nome-do-cluster
+```
+Aonde `nome-do-cluster` é o nome do seu cluster.
+
+Para mais informações, veja a [documentação oficial](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/delete-cluster.html)
+
+
