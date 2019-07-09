@@ -297,7 +297,7 @@ helm tiller run my-tiller-namespace -- helm install stable/mysql
 kubectl get deployments
 ```
 
-4. Parar o Tiller local e seu plugin
+4. Parar o Tiller local, assim como seus plugins
 
 ```Console
 helm tiller stop
@@ -311,4 +311,48 @@ helm tiller run my-tiller-namespace -- helm list
 helm tiller run my-tiller-namespace --bash -c 'echo running helm; helm list'
 ```
 
-### Servidor de Métricas para Kubernetes
+Fonte para esta parte: [Medium](https://medium.com/faun/helm-basics-using-tillerless-dac28508151f)
+
+## Servidor de Métricas do Kubernetes
+
+O servidor de métricas é um agregador de dados de uso de recursos no cluster, e não é implantado por padrão em clusters do Amazon EKS. [Fonte](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/metrics-server.html)
+
+### Instalação
+
+#### Pré-requisitos
+Antes de prosseguir para a instalação, tenha certeza de ter as seguintes ferramentas instaladas:
+
+1. `curl --version`
+2. `tar --version`
+3. `gzip --version`
+4. `jq --version`
+
+#### Download e Instalação no cluster
+Navegue até o diretório que você deseja que o servidor seja baixado e execute o seguinte comando:
+
+```Console
+mkdir servidor-metricas && cd servidor-metricas
+```
+
+Agora, baixe e instale o servidor de métricas no cluster
+
+```Console
+DOWNLOAD_URL=$(curl --silent "https://api.github.com/repos/kubernetes-incubator/metrics-server/releases/latest" | jq -r .tarball_url)
+DOWNLOAD_VERSION=$(grep -o '[^/v]*$' <<< $DOWNLOAD_URL)
+curl -Ls $DOWNLOAD_URL -o metrics-server-$DOWNLOAD_VERSION.tar.gz
+mkdir metrics-server-$DOWNLOAD_VERSION
+tar -xzf metrics-server-$DOWNLOAD_VERSION.tar.gz --directory metrics-server-$DOWNLOAD_VERSION --strip-components 1
+kubectl apply -f metrics-server-$DOWNLOAD_VERSION/deploy/1.8+/
+```
+Verifique se o servidor de métricas foi instalado e está sendo executado no cluster com o seguinte comando:
+
+```Console
+kubectl get deployment metrics-server -n kube-system
+```
+
+#### Remover o Servidor de Métricas
+Troque o `$DOWNLOAD_VERSION` pela versão do diretório ao qual você baixou o servidor.
+
+```Console
+kubectl delete -f metrics-server-$DOWNLOAD_VERSION/deploy/1.8+/
+```
