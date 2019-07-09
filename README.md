@@ -219,21 +219,22 @@ Quando se trata de Kubernetes, uma ferramenta que é muito útil é o [Helm](htt
 
 Helm possui dois componentes principais: o cliente de terminal e um servidor chamado Tiller.
 
+#### Cliente de Terminal
 A instalação do cliente é bem simples.
 
-#### Linux
+##### Linux
 O pacote Snap de Helm é mantido por [Snapcrafters](https://github.com/snapcrafters/helm)
 ```Console
 sudo snap install helm --classic
 ```
 
-#### MacOS
+##### MacOS
 Para MacOS, pode-se instalar via Homebrew.
 ```Console
 brew install kubernetes-helm
 ```
 
-#### Windows
+##### Windows
 Os membros da comunidade Kubernetes contribuiram com uma build de um [pacote](https://chocolatey.org/packages/kubernetes-helm) para o [Chocolatey](https://chocolatey.org/packages/kubernetes-helm). Normalmente este pacote está atualizado.
 
 ```Console
@@ -245,3 +246,69 @@ O pacote binário também pode ser instalado via `scoop`.
 ```Console
 scoop install helm
 ```
+
+#### Servidor
+
+O servidor Helm (Tiller) pode ser instalado no cluster facilmente rodando o seguinte comando no cliente helm:
+
+```Console
+helm init
+```
+
+Porém, esta opção é insegura visto que isso instala um servidor no seu cluster com acesso a todos os seus recursos. Se você deseja aumentar a segurança, isso envolve mais tarefas em relação ao gerenciamento de namespaces, certificados TLS e RBAC.
+
+Uma das maiores preocupações em relação ao Tiller é que ele não é uma opção muito segura visto que ele reside dentro do cluster com todos os direitos adminstrativos. Visto que isto traz um grande risco para o cluster, existe muita discussão sobre a criação de alternativas para termos Helm, sem ter Tiller instalado no servidor. O termo em inglês para isto é *Tillerless* Helm (do inglês Helm sem Tiller).
+
+### Tillerless Helm (Helm sem Tiller)
+Para usar o Helm sem Tiller, você pode instalar o plugin criado por [Rimas Mocevicius](https://rimusz.net/) 
+
+Para instalar simplesmente execute:
+
+```Console
+helm plugin install https://github.com/rimusz/helm-tiller
+```
+
+Para iniciar o Tiller localmente, execute o comando para iniciar com a flag `--client-only``.
+
+```Console
+helm init --client only
+```
+
+#### Comandos Básicos para Helm
+
+Aqui está uma lista de comandos básicos para Helm:
+
+1. Iniciar Tiller com um namespace
+
+```Console
+helm tiller start my-tiller-namespace
+```
+
+2. Instalar um Chart para teste
+
+```Console
+helm tiller run my-tiller-namespace -- helm repo update
+helm tiller run my-tiller-namespace -- helm install stable/mysql
+```
+
+3. Confirmar se o Chart foi instalado
+
+```Console
+kubectl get deployments
+```
+
+4. Parar o Tiller local e seu plugin
+
+```Console
+helm tiller stop
+```
+
+É importante notar que para rodar comandos helm em um anmespace, você usa o comando `helm tiller run my-tiller-namespace` acompanhado do comando que deseja executar:
+
+Exemplo:
+```Console
+helm tiller run my-tiller-namespace -- helm list
+helm tiller run my-tiller-namespace --bash -c 'echo running helm; helm list'
+```
+
+### Servidor de Métricas para Kubernetes
