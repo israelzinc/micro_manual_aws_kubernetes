@@ -1,6 +1,45 @@
 # Micro Manual Aws Kubernetes
+Este micro manual foi feito para você que quer saber rapidamente como colocar sua aplicação num cluster Kubernetes hosteado na Amazon. Como é um manual, e não um livro guia, não focarei em ter explicações profundas.
 
-Micro manual para começar rápido desenvolvendo suas aplicações Kubernetes. Caso você seja como eu, que em 2019 não sabe por onde começar quando quer colocar um cluster Kubernetes no ar, fiz este manual baseado em um manual similar em inglês de um coléga e adicionei minhas próprias experiências.
+Observação: Como este tipo de tecnologia avança rápido, é possível que algumas coisas escritas nesse manual fiquem obsoleta em questão de meses (ou até mesmo semanas). Caso você ache que algo precisa ser atualizado, não hesite em alterar o manual via pull requests ou email.
+
+_**Disclaimer**_: Este manual foi feito baseado em um [manual similar](https://github.com/Cy-bec/AWS_Kubernetes) em inglês de um coléga. Ele é apenas uma versão extendida e traduzida para Português do Brasil de informações colhidas na internet.
+
+## Pré-Requisitos
+Antes de começar o tutorial, assumo que você tenha uma conta na Amazon Web Services (AWS).
+
+Caso não queira criar uma conta na AWS, você pode fazer a maioria das coisas explicadas nesse manual usando o [Minikube](https://github.com/kubernetes/minikube).
+
+Também é necessário que você possua pyhton3 instalado na sua máquina. Caso não possua, [baixe aqui](https://www.python.org/downloads/) ou instale via `apt-get` our `homebrew`, etc...
+
+## Primeiros Passos
+A primeira parte deste tutorial irá guiá-lo na instalação das ferramentas necessárias para se concetar com a conta na amazon. É esperado que você já possua a conta no serviço AWS.
+
+Em possessão de uma conta AWS, você precisa criar um token de segurança para faze a comunicação com a API.
+
+1. Primeiramente instale o cliente na sua máquina.
+    1. `pip3 install awscli --upgrade --user`
+    2. Verifique a versão usando o comando:  `aws --version`
+    3. Se você não foi capaz de instalar a versão 1.16.156 ou mais recente, você precisa garantir que o AWS IAM Authenticator para Kubernetes está instalado no seu sitema. Para maiores informações, veja a [documentação oficial](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/install-aws-iam-authenticator.html)
+2. Configure seu cliente com as credenciais AWS CLI Credentials no seu ambiente:
+
+    1. Execute o comando `aws configure`. Feito isto, o sistema irá pedir uma série de informações a serem preenchidas.
+        1. AWS Access Key ID [None]: Coloque a sua account key id aqui
+        2. AWS Secret Access Key [None]: Coloque seu Secret Access Key aqui
+        3. Default region name [None]: Coloque a região que você deseja deploy o sistema aqui.
+            1. Exemplo: Toquio é `ap-northeast-1`
+            2. Clique [aqui](https://docs.aws.amazon.com/pt_br/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html) para ver as regiões
+        4. Default output format [None]: _**json**_
+    2. Instale a ferramenta `eksctl`
+        1. `curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/latest_release/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+        `
+        2. `sudo mv /tmp/eksctl /usr/local/bin`
+        3. Rode `eksctl version` para ter certeza que tudo occorreu corretamente.
+    3. Instale e configure o kubectl para amazon EKS (apenas para sistemas Unix-like)
+        1. `curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl`
+        2. Dê permissão para o kubectl ser executável: `chmod +x ./kubectl`
+        3. Mova a ferramenta para o seu PATH: `sudo mv ./kubectl /usr/local/bin/kubectl`
+        4. Rode `kubectl version` para ter certeza que tudo occorreu corretamente.
 
 ## Selecionando a instância baseado na disponibilidade de Pods desejada
 ![alt text][Networking]
@@ -13,11 +52,11 @@ instanceSupportedIPv4Address = Número de endereços IPv4 (ou IPv6) por interfac
 numeroMaximoPods = ( instanceSupportedIPs * instanceSupportedIPv4Address ) - 1;
 ```
 
-Por exemplo, se você possui a instância t3.nano, que suporta o máximo de 2 interface de redes e possui 2 endereços IPv4 por interface, a sua disponibilidade de Pods será de 3. Isto devido ao fato de um endereço de IP ser reservado para o nó.
+Por exemplo, se você possui a instância _**t3.nano**_, que suporta o máximo de 2 interface de redes e possui 2 endereços IPv4 por interface, a sua disponibilidade de Pods será de 3. Isto devido ao fato de um endereço de IP ser reservado para o nó.
 
 ```2 * 2 -1 = 3 ```
 
-A informação sobre a quantidade de Interfaces de Rede e a quantidade de endereços IPv4(6) por interface pode ser encontrada neste [endereço](https://docs.aws.amazon.com/pt_br/AWSEC2/latest/UserGuide/using-eni.html)
+A informação sobre a quantidade de Interfaces de Rede e a quantidade de endereços IPv4(6) por interface pode ser encontrada [neste endereço](https://docs.aws.amazon.com/pt_br/AWSEC2/latest/UserGuide/using-eni.html).
 
 Para descobrir a quantidade de Pods que estão rodando no seu cluster, execute o seguinte comando:
 
@@ -27,13 +66,13 @@ kubectl get pods --all-namespaces | grep -i running | wc -l
 
 Caso, queira saber quais Pods estão rodando, simplesmente remova o `wc -l` do comando anterior.
 
-Mais informações nesse blog post ([Blog](https://medium.com/faun/aws-eks-and-pods-sizing-per-node-considerations-964b08dcfad3)), ou no site oficial ([Site](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/pod-networking.html))
+Mais informações nesse [blog post](https://medium.com/faun/aws-eks-and-pods-sizing-per-node-considerations-964b08dcfad3), ou no [site oficial](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/pod-networking.html).
 
 [Networking]: https://docs.aws.amazon.com/eks/latest/userguide/images/networking.png
 
 ## Crie seu cluster EKS na Amazon e os Nós Trabalhadores 
 
-Existem diversas formas de criar clusters AWS, uma das mais comuns é via CLI (interface de linha de comando). Para isto você precisa ter instalado eksctl (caso ainda não tenha feito isso, veja como na seção: XXXX). Depois de ter decidido a instância que gostaria de instalar (caso esteja em dúvida, clique [aqui](#selecionando-a-instância-baseado-na-disponibilidade-de-pods-desejada)), simplesmente execute o seguinte comando:
+Existem diversas formas de criar clusters AWS, uma das mais comuns é via CLI (interface de linha de comando). Para isto você precisa ter instalado eksctl (caso ainda não tenha feito isso, veja como na seção de [primeiros passos](#primeiros-passos)). Depois de ter decidido a instância que gostaria de instalar (caso esteja em dúvida, clique [aqui](#selecionando-a-instância-baseado-na-disponibilidade-de-pods-desejada)), simplesmente execute o seguinte comando:
 
 
 ```Console
@@ -109,13 +148,52 @@ Aonde `nome-do-cluster` é o nome do seu cluster.
 
 Para mais informações, veja a [documentação oficial](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/delete-cluster.html)
 
+## Dando Permissão a outros usuários
+
+Esta parte do manual é para quem deseja dar permissão a outros usuários acessar o cluster.
+
+### Dando permissão root para um usuário
+
+Para dar permissão para um usuário acessar seu repositório como root, você precisará de três peças de informação:
+
+1. _**rolearn**_: Para obtê-la, vá para aws-console -> EKS -> cluster
+2. _**userarn**_: Para obtê-la, na máquina do usuário que você quer dar permissão, rode o comando `aws sts get-caller-identity`.
+3. _**designated_user**_: O nome de usuário (username) que você quer adicionar.
+
+Em possessão dessas informações, você precisa criar o seguinte arquivo `aws-auth.yaml`:
+
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+    - rolearn: arn:aws:iam::11122223333:role/EKS-Worker-NodeInstanceRole-1I00GBC9U4U7B
+      username: system:node:{{EC2PrivateDNSName}}
+      groups:
+        - system:bootstrappers
+        - system:nodes
+  mapUsers: |
+    - userarn: arn:aws:iam::11122223333:user/designated_user
+      username: designated_user
+      groups:
+        - system:masters
+```
+
+Feito isto, você precisa aplicá-lo no seu cluster. Simplesmente rode o seguinte comando:
+
+`kubectl apply -f aws-auth.yaml`
+
+Para informações mais detalhadas, veja a [documentação oficial](https://aws.amazon.com/premiumsupport/knowledge-center/amazon-eks-cluster-access/).
 
 ## Meu primeiro Pod
 
 Em caráter educacional, vamos instalar uma aplicação de livro de convidados no cluster e logo após vamos deinstalá-lo. Estes comandos foram retirados [deste guia](https://docs.aws.amazon.com/pt_br/eks/latest/userguide/eks-guestbook.html).
 
 ### Instalando
-#### One-liner (Comando de uma linha)
+#### _One-liner_ (Comando de uma linha)
 Caso queira instalar com apenas uma linha de código, copie e cole isto no terminal:
 
 ```Console
@@ -322,10 +400,10 @@ O servidor de métricas é um agregador de dados de uso de recursos no cluster, 
 #### Pré-requisitos
 Antes de prosseguir para a instalação, tenha certeza de ter as seguintes ferramentas instaladas:
 
-1. `curl --version`
-2. `tar --version`
-3. `gzip --version`
-4. `jq --version`
+1. _**curl**_: Para verificar se está instalado, execute o comando: `curl --version`
+2. _**tar**_: Para verificar se está instalado, execute o comando: `tar --version`
+3. _**gzip**_: Para verificar se está instalado, execute o comando: `gzip --version`
+4. _**jq**_:  Para verificar se está instalado, execute o comando: `jq --version`
 
 #### Download e Instalação no cluster
 Navegue até o diretório que você deseja que o servidor seja baixado e execute o seguinte comando:
@@ -449,6 +527,7 @@ Rode o comando de login docker que foi retornado no passo anterior. Este comando
 Envie (Push) a imagem para o Amazon ECR com o valor do repositoryUri do passo anterior.
 
 Exemplo:
+
 Troque *__aws_account_id.dkr.ecr.region.amazonaws.com/hello-repository__* pelo seu repositório docker.
 
 ```Console
