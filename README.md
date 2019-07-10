@@ -5,6 +5,20 @@ Observação: Como este tipo de tecnologia avança rápido, é possível que alg
 
 _**Disclaimer**_: Este manual foi feito baseado em um [manual similar](https://github.com/Cy-bec/AWS_Kubernetes) em inglês de um coléga. Ele é apenas uma versão extendida e traduzida para Português do Brasil de informações colhidas na internet.
 
+
+## Table of Contents
+
+- [Pré Requisitos](#pre-requisitos)
+- [Primeiros Passos](#primeiros-passos)
+- [Selecionando a instância baseado na disponibilidade de Pods desejada](#selecionando-a-instancia-baseado-na-disponibilidade-de-pods-desejada)
+- [Crie seu cluster EKS na Amazon e os Nós Trabalhadores ](#crie-seu-cluster-eks-na-amazon-e-os-nos-trabalhadores )
+- [Deletando o cluster EKS via eksctl](#deletando-o-cluster-eks-via-eksctl)
+- [Dando Permissão a outros usuários](#dando-permissão-a-outros-usuarios)
+- [Instalando a Interface de Usuário Kubernetes (Dashboard)](#instalando-a-interface-de-usuário-kubernetes-dashboard)
+- [Usando HELM em conjunto com AWS](#usando-helm-em-conjunto-com-aws)
+- [Tillerless Helm (Helm sem Tiller)](#tillerless-helm-helm-sem-tiller)
+- [Instalar Containers do Docker](#instalar-containers-do-docker)
+
 ## Pré-Requisitos
 Antes de começar o tutorial, assumo que você tenha uma conta na Amazon Web Services (AWS).
 
@@ -87,7 +101,7 @@ eksctl create cluster \
 --node-ami auto
 ```
 
- flag | description|
+ flag | descrição|
   --- | --- |
  --name string                    | Nome do cluster EKS (caso não especificado, um nome aleatório é gerado automaticamente. Exemplo: "unique-creature-1561094398")
  --version string                 | Versão do Kubernetes. Opcões válidas: [1.10, 1.11, 1.12] (default "1.12")
