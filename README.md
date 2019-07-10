@@ -6,7 +6,7 @@ Observação: Como este tipo de tecnologia avança rápido, é possível que alg
 _**Disclaimer**_: Este manual foi feito baseado em um [manual similar](https://github.com/Cy-bec/AWS_Kubernetes) em inglês de um coléga. Ele é apenas uma versão extendida e traduzida para Português do Brasil de informações colhidas na internet.
 
 
-## Table of Contents
+## Indice
 
 - [Pré Requisitos](#pre-requisitos)
 - [Primeiros Passos](#primeiros-passos)
