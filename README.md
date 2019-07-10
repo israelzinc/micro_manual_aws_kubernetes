@@ -117,7 +117,7 @@ NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
 kubernetes   ClusterIP   10.100.0.1      <none>        443/TCP    21h
 ```
 
-## Deletando o cluster EKS via eskctl
+## Deletando o cluster EKS via eksctl
 
 Para deletar o cluster, é necessário que sua versão eksctl seja superior a pelo menos a versão 0.1.31. Para verificar suav versão, execute o comando:
 
